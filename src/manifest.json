@@ -1,0 +1,26 @@
+{
+    "manifest_version": 2,
+    "name": "Lokad",
+    "version": "1.0",
+    "author": "Sunday Johnson",
+    "homepage_url": "https://www.upwork.com/freelancers/~019fb991cf334b5944",
+    "description": "Easily Communicates between browser tabs",
+    "background": {
+        "scripts": ["background.js"],
+        "persistent": false
+    },
+    "permissions": ["tabs"],
+    "content_scripts": [
+        {
+          "matches": [
+            "*://127.0.0.1/*",
+            "*://localhost/*",
+            "*://*.lokad.com/*"
+          ],
+          "js": ["content_script/content_script.js"]
+        }
+    ],
+    "icons": {
+        "90": "assets/icons/lokad.png"
+    }
+}
