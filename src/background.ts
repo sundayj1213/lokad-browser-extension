@@ -103,7 +103,7 @@ async function fetchTopicPublishers(message: any, currentTab: browser.tabs.Tab) 
   }
 
   // focus on oldest tab
-  if(message.focus) {
+  if(message.focus && result.length) {
     await focusOnOldestTab(result);
   }
 
@@ -145,7 +145,10 @@ async function fetchTopicSubscribers(topic: any, currentTab: browser.tabs.Tab) {
   const promises: any = tabs
     .filter(tab => !!tab.id)
     .map((tab) => {
-      return {tab, promise: sendMessagePromise(tab.id, topic)};
+      return {tab, promise: sendMessagePromise(tab.id, {
+        id: '_subscribers', 
+        topic
+      })};
     });
 
   for (let {tab, promise} of promises) {
@@ -153,9 +156,9 @@ async function fetchTopicSubscribers(topic: any, currentTab: browser.tabs.Tab) {
     // if tab.id missing, skip
     if(!tab.id) continue;
 
-    const response= await promise;
+    const response = await promise;
     
-      // if is subscribed to topic, push
+    // if is subscribed to topic, push
     if(response.length) {
       result.push(tab);
     }
