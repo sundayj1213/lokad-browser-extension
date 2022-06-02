@@ -6,9 +6,9 @@ export class LokadController {
    */
   async subscribe(topic: string, currentTab: browser.tabs.Tab | undefined) { 
     // get previous subscribers
-    let subscribers = JSON.parse(sessionStorage.getItem(topic)??'[]');
+    let subscribers: Subscription[] = JSON.parse(sessionStorage.getItem(topic)??'[]');
     // format sunscriber
-    let subscriber = {
+    let subscriber: Subscription = {
       id: currentTab ? currentTab.id: undefined,
       createdAt: (new Date()).getTime()
     };
@@ -93,7 +93,7 @@ export class LokadController {
         result.data = [subscription];
         // send payload to current tab with topic
         window.postMessage({
-          id: '__published',
+          id: '_subscription_trigger',
           topic: message.topic,
           payload: message.payload
         }, '*');

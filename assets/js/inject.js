@@ -28,7 +28,16 @@ class LokadExtApp {
 
           // listen for response
           window.addEventListener('message', (message) => {
-              if(message.data.id == 'pong') {
+              /**
+               * data = {
+               * id: string,
+               * tab: window.tabs.Tab,
+               * topic: string,
+               * subscribers: browser.tab.Tabs[]
+               * }
+              */
+              const { data } = message;
+              if(data.id == 'pong') {
                   return resolve(this.enabled = !0);
               }
           });
@@ -61,6 +70,14 @@ class LokadExtApp {
           // listen for response
           window.addEventListener('message', (message) => {
               // get message data
+              /**
+               * data = {
+               * id: string,
+               * tab: window.tabs.Tab,
+               * topic: string,
+               * subscribers: browser.tab.Tabs[]
+               * }
+              */
               const { data } = message;
 
               // if id is subscribe && topic is topic
@@ -70,13 +87,13 @@ class LokadExtApp {
               }
 
               // if id is publish && topic is topic
-              if(data.id == '__published' && data.topic == topic) {
+              if(data.id == '_subscription_trigger' && data.topic == topic) {
                   // run callback
                   onMessage(data.payload);
               }
           });
 
-          // consider disabled after 2s
+          // consider disabled after 10s
           setTimeout(() => resolve(false), 10000);
       });
   }
@@ -106,6 +123,14 @@ class LokadExtApp {
           // listen for response
           window.addEventListener('message', (message) => {
               // get message data
+              /**
+               * data = {
+               * id: string,
+               * tab: window.tabs.Tab,
+               * topic: string,
+               * subscribers: browser.tab.Tabs[]
+               * }
+              */
               const { data } = message;
 
               // if id is topic
@@ -115,7 +140,7 @@ class LokadExtApp {
               }
           });
 
-          // considered disabled after 2s
+          // considered disabled after 10s
           setTimeout(() => resolve(false), 10000);
       });
   }

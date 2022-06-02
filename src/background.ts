@@ -1,11 +1,11 @@
 // listen to message from content script
-browser.runtime.onMessage.addListener((message: any) => {
+browser.runtime.onMessage.addListener((message: Message) => {
 
   // respond only if content script is available
   browser.tabs.query({active: true, currentWindow: true})
     .then(async (tabs: browser.tabs.Tab[]) => {
       // initialize response
-      let response;
+      let response: ExtResponse;
       // get first item from current tabs
       let [currentTab] = tabs;
       
@@ -76,20 +76,23 @@ async function fetchTopicPublishers(message: any, currentTab: browser.tabs.Tab) 
     payload: message.payload,
   };
 
-  for(var tab of tabs) {
+  const promises: any = tabs.filter(tab => !!tab.id)
+    .map((tab) => {
+      return {tab, promise: sendMessagePromise(tab.id, payload)};
+    });
 
+  for (let {tab, promise} of promises) {
+    
     // if tab.id missing, skip
     if(!tab.id) continue;
 
-    const [response] = await sendMessagePromise(
-      tab.id, payload
-    );
+    const [response] = await promise;
 
     // if is subscribed to topic, push
     if(response && response.id && response.id != currentTab.id) {
       // send payload to tabs with topic to listening tabs
       browser.tabs.sendMessage(tab.id, {
-        id: '__published',
+        id: '_subscription_trigger',
         topic: message.topic,
         payload: message.payload
       });
@@ -110,12 +113,12 @@ async function fetchTopicPublishers(message: any, currentTab: browser.tabs.Tab) 
 
 /**
  * Focus on oldest tab
- * @param {any} tabs
+ * @param {Subscription[]} subscriptions
  * @returns 
  */
-async function focusOnOldestTab(tabs: any) {
+async function focusOnOldestTab(subscriptions: Subscription[]) {
   // get oldest tab
-  const oldestTab = tabs.reduce(
+  const oldestTab = subscriptions.reduce(
     (r: any, o: any) => o.createdAt && r.createdAt 
       && o.createdAt < r.createdAt? o : r
   );  
@@ -139,16 +142,18 @@ async function fetchTopicSubscribers(topic: any, currentTab: browser.tabs.Tab) {
   const result = [];
   const tabs = await getTabsInSameDomain(currentTab);
 
-  for(var tab of tabs) {
+  const promises: any = tabs
+    .filter(tab => !!tab.id)
+    .map((tab) => {
+      return {tab, promise: sendMessagePromise(tab.id, topic)};
+    });
+
+  for (let {tab, promise} of promises) {
 
     // if tab.id missing, skip
     if(!tab.id) continue;
 
-    const response= await sendMessagePromise(
-      tab.id, {
-        id: '_subscribers', 
-        topic
-      });
+    const response= await promise;
     
       // if is subscribed to topic, push
     if(response.length) {
@@ -192,9 +197,10 @@ async function getTabsInSameDomain(currentTab: browser.tabs.Tab)
  * @param {any} item
  * @returns {Promise<Array>}
  */
-async function sendMessagePromise(tabId: number, message: any): Promise<any>
+async function sendMessagePromise(tabId: number | undefined, message: any): Promise<any>
 {
   return new Promise((resolve, reject) => {
+    if(tabId) {
       browser.tabs.sendMessage(tabId, message) 
       .then((response: any) => {
 
@@ -206,5 +212,6 @@ async function sendMessagePromise(tabId: number, message: any): Promise<any>
         // if no response after 10s, return empty
         setTimeout(() => resolve([]), 10000);
       });
+    } else resolve([]);
   });
 }
